@@ -4,7 +4,7 @@
 \alias{dif.wave}
 \title{Calculate a difference waveform from two data frames}
 \usage{
-dif.wave(x, z, keep = "y")
+dif.wave(x, z, name = NULL, keep = NULL)
 }
 \arguments{
 \item{x}{A data frame in the format returned from \code{\link{load.data}}. This value serves
@@ -13,10 +13,11 @@ as the minuend (i.e., value to be subtracted from).}
 \item{z}{A data frame in the format returned from \code{load.data}. This value serves
 as the subtrahend (i.e., value subtracted).}
 
-\item{keep}{Valid inputs can be "y" or "n." When \code{keep} = "y", the data frame returned
-  from the function will consist of both the difference data frame and the data
-  frame provided for x (i.e., the minuend).  If \code{keep} = "n" then only the
-  resulting difference data frame will be returned.}
+\item{name}{Specify the Stimulus column name of the difference data frame.  Must provide the new
+name in quotations.}
+
+\item{keep}{Include one of the data frames used in subtraction in the returned difference data frame.
+  By default \code{keep} = NULL and only the resulting difference data frame will be returned.}
 }
 \value{
 One of two possible data frames, depending on the value of \code{keep}:
@@ -47,7 +48,8 @@ The data frames must either: \enumerate{
  refactor.neut <- factor(Neutral$Stimulus)
  Negative$Stimulus <- refactor.neg
  Neutral$Stimulus <- refactor.neut
- difference <- dif.wave(Negative, Neutral, keep = "y")
+ difference <- dif.wave(Negative, Neutral, name = "Neg - Neut", keep = Neutral)
+ head(difference) # view the new Stimulus column name
  grandaverage(difference, "V78") # plot the grand average difference wave
 }
 \author{

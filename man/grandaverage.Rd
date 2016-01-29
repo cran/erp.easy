@@ -42,7 +42,7 @@ A single plot of grand average waveforms for each condition. Includes a
 }
 \examples{
 # Create a plot of the grand average waveforms for each imported condition
-grandaverage(ERPdata, electrodes = "V78", window = c(250, 500))
+grandaverage(ERPdata, electrodes = "V78", window = c(1000, 1500))
 }
 \author{
 Travis Moore

@@ -36,16 +36,16 @@ A data frame with columns labeled:
 \code{p.measures} calculates simple peak amplitude and latency for each condition
   in the data frame. Values are calculated for grand average waveforms, as well as
   for each individual subject. Values are based on the electrode, or electrode cluster for
-  dense arrays, provided in \code{electrodes}.
+  dense arrays, provided in \code{electrodes}. This function will identify the largest
+  deviation from 0, whether positive or negative.
 }
 \details{
-Single electrodes can be passed to the package functions, or several electrodes can
-  be provided (i.e., when using dense arrays) and those electrodes will be averaged
-  together as a single electrode.
+At this time there is no way to specify a negative or positive peak.
+  \code{p.measures} simply returns the largest absolute value deviation from zero.
 }
 \examples{
 # Calculate peak latency and amplitude
-p.measures(ERPdata, electrodes = "V78", window = c(250, 500))
+p.measures(ERPdata, electrodes = "V78", window = c(1000, 1500))
 }
 \author{
 Travis Moore

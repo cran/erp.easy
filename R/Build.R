@@ -85,20 +85,15 @@
         test2 <- grand.avg[i, 3] > grand.avg[more:end, 3]
         test3 <- grand.avg[i, 3] < grand.avg[start:less, 3]
         test4 <- grand.avg[i, 3] < grand.avg[more:end, 3]
-        #print(grand.avg[i, 3])
-        #print(test1)
-        #print(test2)
       if (all(test1) == TRUE & all(test2) == TRUE | all(test3) == TRUE & all(test4) == TRUE) {
           vector <- c(vector, grand.avg[i, 3])
         }
     }
       if (is.null(vector)) {
         peaks.ga <- values[which.max(abs(values))]
-        #peaks.ga <- max(values)
       } else {
         vector <- unlist(vector)
         peaks.ga <- vector[which.max(abs(vector))]
-        #peaks.ga <- max(vector)
       }
   }
   )
@@ -119,8 +114,11 @@
   with(avgsub, { # see .get.ga.mamps comment
     values = subset(avgsub, Subject == x & Stimulus == y & Time.range >= win1 &
                          Time.range <= win2, select=Means)
+    all.values <- subset(avgsub, Subject == x & Stimulus == y)
+    rownames(all.values) <- NULL # this resets the row indexes each time the program loops, else
+      # the which command refers to unexpected rows
     values = as.vector(unlist(values))
-    times = subset(avgsub, Stimulus == y, select = Time)
+    times = subset(all.values, Stimulus == y, select = Time)
     rowinfo1 <- max(which(abs(times-win1) == min(abs(times-win1))))
     rowinfo2 <- max(which(abs(times-win2) == min(abs(times-win2))))
     winnew1 = rownames(times)[rowinfo1]
@@ -131,12 +129,12 @@
       end <- i + num.pts
       less <- i - 1
       more <- i + 1
-      test1 <- avgsub[i, 3] > avgsub[start:less, 3]
-      test2 <- avgsub[i, 3] > avgsub[more:end, 3]
-      test3 <- avgsub[i, 3] < avgsub[start:less, 3]
-      test4 <- avgsub[i, 3] < avgsub[more:end, 3]
+      test1 <- all.values[i, 4] > all.values[start:less, 4]
+      test2 <- all.values[i, 4] > all.values[more:end, 4]
+      test3 <- all.values[i, 4] < all.values[start:less, 4]
+      test4 <- all.values[i, 4] < all.values[more:end, 4]
       if (all(test1) == TRUE & all(test2) == TRUE | all(test3) == TRUE & all(test4) == TRUE) {
-        vector <- c(vector, avgsub[i, 3])
+        vector <- c(vector, all.values[i, 4])
       }
     }
     if (is.null(vector)) {
@@ -144,7 +142,7 @@
     } else {
       vector <- unlist(vector)
       peaks <- vector[which.max(abs(vector))]
-      }
+    }
   }
   )
 } # close main function

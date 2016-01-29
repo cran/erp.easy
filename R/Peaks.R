@@ -3,7 +3,8 @@
 #' \code{p.measures} calculates simple peak amplitude and latency for each condition
 #'   in the data frame. Values are calculated for grand average waveforms, as well as
 #'   for each individual subject. Values are based on the electrode, or electrode cluster for
-#'   dense arrays, provided in \code{electrodes}.
+#'   dense arrays, provided in \code{electrodes}. This function will identify the largest
+#'   deviation from 0, whether positive or negative.
 #'
 #' @param data A data frame in the format returned from \code{\link{load.data}}
 #' @param electrodes A single value or concatenation of several values (to be averaged)
@@ -18,9 +19,8 @@
 #'   found, the simple peak will be returned. To force the simple peak, set \code{num.pts}
 #'   to 0.
 #'
-#' @details Single electrodes can be passed to the package functions, or several electrodes can
-#'   be provided (i.e., when using dense arrays) and those electrodes will be averaged
-#'   together as a single electrode.
+#' @details At this time there is no way to specify a negative or positive peak.
+#'   \code{p.measures} simply returns the largest absolute value deviation from zero.
 #'
 #' @return A data frame with columns labeled:
 #' \itemize{
@@ -32,7 +32,7 @@
 #'
 #' @examples
 #' # Calculate peak latency and amplitude
-#' p.measures(ERPdata, electrodes = "V78", window = c(250, 500))
+#' p.measures(ERPdata, electrodes = "V78", window = c(1000, 1500))
 #'
 #' @author Travis Moore
 
@@ -90,12 +90,19 @@ p.measures <- function(data, electrodes, window, num.pts = 10) {
                          c("Subject", "Trial Type", "Peak Latency", "Peak Amplitude"))
 
 # ------------- begin individual measures
-  peaks = vector("list",num.conditions)	# begin individual measures
+
+  # this is likely the culprit.  Make sure the lapply function is actually cycling through every subject
+    peaks = vector("list",num.conditions)	# begin individual measures
   for (i in 1:num.conditions) {
     peaks[[i]] = lapply(sub.IDs, trial.types[i], avgsub, Stimulus.ind, Time.range,
                         win1, win2, num.pts, FUN = .get.peak.amps)
-  }
-    unpacked.peak.amp <- unlist(peaks)
+
+
+    #peaks[[i]] = lapply(sub.IDs, trial.types[i], avgsub, Stimulus.ind, Time.range,
+    #                    win1, win2, num.pts, FUN = .get.peak.amps)
+  } # close for loop
+
+  unpacked.peak.amp <- unlist(peaks)
   peak.sub = vector("list", length(unpacked.peak.amp))
   peak.cond = vector("list", length(unpacked.peak.amp))
   peak.lat = vector("list", length(unpacked.peak.amp))
@@ -108,11 +115,18 @@ p.measures <- function(data, electrodes, window, num.pts = 10) {
     unpacked.peak.lat <- unlist(peaks.lat)
     unpacked.peak.sub <- unlist(peaks.sub)
     unpacked.peak.cond <- unlist(peaks.cond)
+
   peaks.measures = setNames(data.frame(unpacked.peak.sub, unpacked.peak.cond,
                                        unpacked.peak.lat, unpacked.peak.amp),
                             c("Subject", "Trial Type", "Peak Latency",
                               "Peak Amplitude"))	# individual measures df
+
+  grandaverage(data, electrodes, window)
+  tryCatch(abline(v = unpacked.peak.ga.lat, lty = 6, col = c(2, 4, seq(5, num.conditions+3, 1))),
+           error = function(e) {abline(v = unpacked.peak.ga.lat, lty = 6, col = 2)}, silent = TRUE)
+
 # binds both peak measures data frames and makes it available outside the function
   peak.measures <- rbind(grand.peaks, peaks.measures)
   return(peak.measures)
+
 }  # Function closing bracket

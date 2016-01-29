@@ -29,7 +29,7 @@
 #'
 #' @examples
 #' # Calculate mean amplitude and standard deviation
-#' m.measures(ERPdata, electrodes = "V78", window = c(250, 500))
+#' m.measures(ERPdata, electrodes = "V78", window = c(1000, 1500))
 #'
 #' @author Travis Moore
 
@@ -125,5 +125,8 @@ ind.means <- setNames(data.frame(unpacked.peak.sub, unpacked.peak.cond,
                                  unpacked.mean.sd, unpacked.mean.amp),
                       c("Subject", "Trial Type", "Standard Dev", "Mean Amplitude"))
 mean.measures <- rbind(grand.means, ind.means)
+
+grandaverage(data, electrodes, window)
+
 return(mean.measures)
 } # Close main function

@@ -4,8 +4,7 @@
 \alias{load.data}
 \title{Import your individual ERP data files.}
 \usage{
-load.data(path, condition, num.subs, epoch.st, epoch.end, head = FALSE,
-  addto = NULL, ext = ".txt")
+load.data(path, condition, num.subs, epoch.st, epoch.end, header = FALSE)
 }
 \arguments{
 \item{path}{The folder path containing your ERP files}
@@ -16,20 +15,13 @@ type you will be importing (i.e., the condition indicated in the file name)}
 \item{num.subs}{The number of files (subjects) to import for a given condition}
 
 \item{epoch.st}{The earliest time point sampled in the ERP files, including
-the basline (e.g., -100)}
+the basline (e.g., -200)}
 
 \item{epoch.end}{The final time point sampled in the ERP files}
 
-\item{head}{Only accepts values of TRUE or FALSE. Used to specify whether or not there
-is an existing header row in the ERP files.  If there is no header, \code{load.data}
-will supply one.}
-
-\item{addto}{An existing data frame (i.e. already in the format returned by
-\code{load.data}) you wish to add to.  For example, use \code{addto} if you import
-a "Neutral" condition, then wish to add a "Standard" condition to the data frame for
-analysis. The default value is NULL.}
-
-\item{ext}{The file extension of the ERP files. The default is .txt}
+\item{header}{Only accepts values of TRUE or FALSE. Used to specify whether or not there
+  is an existing header row in the ERP files.  If there is no header, \code{load.data}
+  will supply one (see details below).}
 }
 \value{
 A single, concatenated data frame of all electrode data for all
@@ -42,11 +34,11 @@ A single, concatenated data frame of all electrode data for all
 }
 }
 \description{
-\code{load.data} imports your individual ERP data files. File extensions should be .txt and
-file names must be in the format: trial.type_sub# (e.g., Neutral_1). Raw data files to be
+\code{load.data} imports your individual ERP data files. File extensions must be .txt and
+file names must be in the format: YourFile_Condition.txt (e.g., SS34_Positive.txt). Raw data files to be
 imported should be organized as follows:
 \itemize{
-  \item each electrode should be a separate column
+  \item each electrode must be a separate column
   \item voltages at each time point should be listed under the appropriate electrode
     column as rows
  \item no other data should be present in the raw data file (e.g., subject, condition,
@@ -55,18 +47,21 @@ imported should be organized as follows:
 }
 \details{
 \itemize{
-  \item Name each individual file following the format mentioned above (e.g., Neutral_1).
-  \code{load.data} will look for files beginning with \code{condition}, (e.g., Neutral).  Do
-  not include the underscore "_" as part of \code{condition}.  The convention for subjects
-  is a capital "S" followed by the subject number provided in the file name
-  (e.g., S1, S2, etc.). Subjects will be loaded into the "Subject" column of the returned
-  data frame.
+  \item Name each individual file following the format mentioned above (e.g., SS34_Positive.txt).
+  \code{load.data} will ignore all text preceding the "_", and treat all text following the "_"
+  as the \code{condition}, (e.g., Positive).  Use only one "_" in the file name (i.e., to separate
+  your own naming convention from the \code{condition}); using multiple "_" characters will lead to
+  faulty importing of data.  The erp.easy convention for subjects is a capital "S" followed by the
+  number corresponding to the order in which the file was loaded (e.g., S1, S2, etc.). Subjects will
+  be loaded into the "Subject" column of the returned data frame.
 
   \item If no header is present in the ERP files, one will be supplied, using the standard R
-  convenction of a capital "V" followed by increasing integers (e.g., V1, V2, V3). Use these
-  header values to refer to the electrodes.
+  convention of a capital "V" followed by increasing integers (e.g., V1, V2, V3). Use these
+  automatically assigned column name values to refer to the electrodes (unless a header is provided
+  in the raw data file).
 
-  \item Enter the baseline, if present in your individual files, in \code{epoch.st} (e.g., -100).
+  \item Enter the starting time of the baseline, if present in your individual files, in
+  \code{epoch.st} (e.g., -200).
 
   \item Once the desired data frames have been loaded, they can be
   \href{http://www.statmethods.net/input/exportingdata.html}{exported} as a number of
@@ -78,21 +73,25 @@ imported should be organized as follows:
 }
 }
 \note{
-Using \code{addto} is a great way to save time. All functions will act on all
-  conditions included in the data frame you provide. For example, if you'd like to see
-  all conditions plotted, simply use \code{addto} to make a single data frame to pass to a
-  plotting function, and you will see all added conditions plotted simultaneously (as
-  opposed to making several data frames and passing each separately to a function).
+While importing data must be done using a separate function call for each condition,
+  it can be convenient to use R's native \code{rbind.data.frame()} command to bind
+  several loaded conditions (variables) into a single data frame consisting of multiple
+  conditions. All erp.easy functions will act on all conditions included in the data frame
+  passed to the function. For example, if you'd like to see all conditions plotted, simply
+  use \code{rbind.data.frame()} to make a single data frame to pass to an erp.easy plotting
+  function, and you will see all added conditions plotted simultaneously in the same figure
+  (as opposed to making separate data frames for each condition, then passing each data
+  frame separately to a function).
 }
 \examples{
 \dontrun{
-# Importing data for a condition named "Neutral" (file names: "Neutral_1", "Neutral_2", etc.)
-Neutral <- load.data(path = "/Users/Username/Folder/", condition = "Neutral",
-num.subs = 3, epoch.st = -100, epoch.end = 896, head = FALSE, addto = NULL, ext = ".txt)
+# Importing data for a condition named "Neutral" (file names: "Sub1_Neutral.txt",
+"Sub2_Neutral.txt", etc.)
+neutral <- load.data(path = "/Users/Username/Folder/", condition = "Neutral",
+num.subs = 20, epoch.st = -200, epoch.end = 899, header = FALSE)
 
-# Adding a condition named "Standard" to the imported "Neutral" data
-combo <- load.data(path = "/Users/Username/Folder/", condition = "Standard",
-num.subs = 3, epoch.st = -100, epoch.end = 896, head = FALSE, addto = Neutral, ext = ".txt)
+# Adding imported data named "positive" to the imported "neutral" data
+combo <- rbind.data.frame(neutral, positive)
 }
 }
 \author{

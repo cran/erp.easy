@@ -30,7 +30,7 @@
 #'
 #' @examples
 #' # Create a plot of the grand average waveforms for each imported condition
-#' grandaverage(ERPdata, electrodes = "V78", window = c(250, 500))
+#' grandaverage(ERPdata, electrodes = "V78", window = c(1000, 1500))
 #'
 #' @author Travis Moore
 
@@ -65,22 +65,42 @@ grandaverage <- function(data, electrodes, window = NULL) {
   plot(rowMeans(as.data.frame(means.cond.sub[1])) ~ Time.range, typ = "l", lwd = 3,
        main = "Grand Average", xlab = "Time in milliseconds", ylab = "Amplitude in microvolts",
        col = 2, ylim = c(lower, upper))
-    if (!is.null(window)) {
-  rect(win1, lower, win2, upper, lwd = 2)
-    } else {
-      # nothing
-    }
+
+
+
+  if (!is.null(window)) {
+    rect(win1, lower, win2, upper, lwd = 2, col=rgb(0.8, 0.8, 0.8, 0.3))
+
+    #legend("topright", inset = 0.05, title = "Trial Types", lwd = 3, trial.types,
+    #      col = 2, bg = "white")
+
+  } else {
+    # nothing
+  }
+
+
+
+
+  legend("topright", inset = 0.05, title = "Trial Types", lwd = 3, trial.types,
+         col = 2, bg = "white")
+
     if (num.conditions >= 2) {
       counter <- 3 # counter that increments the color of the lines()
       for (k in 2:num.conditions) {
         counter <- counter + 1
         lines(rowMeans(as.data.frame(means.cond.sub[k])) ~ Time.range, typ = "l",
               lwd = 3, col = counter)
+
+        try(legend("topright", inset = 0.05, title = "Trial Types", lwd = 3, trial.types,
+                   col = c(2, 4, seq(5, num.conditions+3, 1)), bg = "white")
+            , silent = TRUE)  # suppresses a known error when there is only 1 condition
       }
     } else {
       # nothing
     }
-  try(legend("topright", inset = 0.05, title = "Trial Types", lwd = 3, bty = "n", trial.types,
-         col = c(2, 4, seq(5, num.conditions+3, 1)))
-  , silent = TRUE)  # suppresses a known error when there is only 1 condition
+
+  # activate this line to return a data frame of the raw amplitudes of the grand average
+  return(rowMeans(as.data.frame(means.cond.sub)))
+
+
 }  # CLOSE MAIN FUNCTION
