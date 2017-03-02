@@ -16,6 +16,8 @@
 #' for use in functions, or will assign headers if none are present (see \code{\link{load.data}}.)
 #' Single electrodes can be passed to the package functions, or several electrodes can be provided
 #' (i.e., when using dense arrays) and those electrodes will be averaged together as a single electrode.
+#' See also \code{\link{easy.load}} for a more user-friendly way to import your data using the erp.easy
+#' data import wizard.
 #'
 #' @section Plotting functions:
 #' The plotting functions \code{\link{grandaverage}}, \code{\link{individual}}, and

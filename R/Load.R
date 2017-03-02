@@ -1,8 +1,8 @@
-#' Import your individual ERP data files.
+#' Import your ERP data files.
 #'
 #' \code{load.data} imports your individual ERP data files. File extensions must be .txt and
-#' file names must be in the format: YourFile_Condition.txt (e.g., SS34_Positive.txt). Raw data files to be
-#' imported should be organized as follows:
+#'   file names must be in the format: YourFile_Condition.txt (e.g., SS34_Positive.txt). Raw data files to be
+#'   imported should be organized as follows:
 #' \itemize{
 #'   \item each electrode must be a separate column
 #'   \item voltages at each time point should be listed under the appropriate electrode
@@ -11,13 +11,20 @@
 #'    time, etc.)
 #' }
 #'
+#' See also \code{\link{easy.load}} for a more user-friendly way to
+#'   generate the appropriate code.
+#'
 #' @param path The folder path containing your ERP files
 #' @param condition In quotes, a string indicating which trial
-#' type you will be importing (i.e., the condition indicated in the file name)
+#'   type to be imported (i.e., the condition indicated in the file name)
 #' @param num.subs The number of files (subjects) to import for a given condition
 #' @param epoch.st The earliest time point sampled in the ERP files, including
 #'   the basline (e.g., -200)
-#' @param epoch.end The final time point sampled in the ERP files
+#' @param epoch.end The final time point sampled in the ERP files (typically \eqn{
+#'   final time point - 1})
+#' @param bsln.cor If "y", applies baseline correction to the imported data.  Baseline
+#'   correction is achieved by subtracting the mean voltage prior to 0 ms on a channel-
+#'   by-channel basis.
 #' @param header Only accepts values of TRUE or FALSE. Used to specify whether or not there
 #'   is an existing header row in the ERP files.  If there is no header, \code{load.data}
 #'   will supply one (see details below).
@@ -81,7 +88,7 @@
 #' }
 
 
-load.data <- function(path, condition, num.subs, epoch.st, epoch.end, header = FALSE) {
+load.data <- function(path, condition, num.subs, epoch.st, epoch.end, bsln.cor = "n", header = FALSE) {
 
   # restores original working directory upon exit
   oldwd <- getwd()
@@ -116,22 +123,41 @@ load.data <- function(path, condition, num.subs, epoch.st, epoch.end, header = F
 
   # bind list into data frame
   data.df = plyr::ldply(tables)
+  data.header <- colnames(data.df) # to reassign names after baseline correction
+
   sublist = vector("list")
   for (i in 1:num.subs) {
-    sublist[[i]] = c(rep(paste("S", i, sep = ""), (nrow(data.df)/num.subs)))
+    #sublist[[i]] = c(rep(paste("S", i, sep = ""), (nrow(data.df)/num.subs)))
+    sub.names <- unlist(lapply(strsplit(sorted.files[i], '_', fixed=TRUE), '[', 1))
+    sublist[[i]] = c(rep(sub.names, (nrow(data.df)/num.subs  )  ))
   }
-  sublist = data.frame(matrix(unlist(sublist), ncol = 1))
+  sublist = data.frame(matrix(unlist(sublist), ncol = 1)) # assign subs to dataframe column
+
   all.times = seq(epoch.st, epoch.end, 1)
-  number = round(length(all.times)/(nrow(data.df)/num.subs), digits = 0)
-  sampled.times = seq(epoch.st, epoch.end, number)
-  stimlist = c(rep(condition, nrow(data.df)))
+  number = round(length(all.times)/(nrow(data.df)/num.subs), digits = 0) # determine step size for time points
+  sampled.times = seq(epoch.st, epoch.end, number) # create time points column
+  stimlist = c(rep(condition, nrow(data.df))) # create stimulus column
+
   data.df1 = cbind.data.frame(sublist, stimlist, sampled.times, data.df)
   colnames(data.df1)[1:3] <- c("Subject", "Stimulus", "Time")
 
   setwd(oldwd)
 
+  # if selected, baseline correction of data occurs here
+  if (bsln.cor == "y") {
+    baseline <- sum(sampled.times<0)
+
+    correction.factors <- by(data.df1[ , 4:ncol(data.df1)], data.df1$Subject,
+      function(x) apply(x, 2, function(y) mean(y[1:baseline])))
+
+data.df2 <- vector("list")
+    for (k in 1:num.subs) {
+      h <- subset(data.df1, data.df1$Subject == levels(data.df1$Subject)[k])
+      h[ , 4:ncol(h)] <- sweep(h[ , 4:ncol(h)], 2, correction.factors[[k]], "-")
+      data.df2[[k]] <- h
+    }
+      data.df1 = plyr::ldply(data.df2)
+  } # close if baseline
+
   return(data.df1)
-
-  }
-
-
+  } # close main function

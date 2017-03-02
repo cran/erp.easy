@@ -59,7 +59,7 @@ butterfly <- function(data, electrodes, stim = 1) {
        typ = "l", ylim = c(min(unlist(means.cond.sub[[stim]])),
                            max(unlist(means.cond.sub[[stim]]))),
        xlab = "Time (ms)",
-       ylab = "Amplitude (microV)",
+       ylab = expression("Amplitude " ~ (mu * V)),
        main = paste("Individual waveforms for", trial.types[stim], seq = ""))
 
   if (num.subs > 1) {

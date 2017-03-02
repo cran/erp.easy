@@ -65,7 +65,7 @@
 ########################################
 
 # function that gets grand average peak amplitudes for each condition
-.get.ga.pamps = function (z, grand.avg, Stimulus, Time.range, win1, win2, num.pts) {
+.get.ga.pamps = function (z, grand.avg, Stimulus, Time.range, win1, win2, num.pts, pol) {
   with(grand.avg, { # see .get.ga.mamps comment
     values = subset(grand.avg, Stimulus==z & Time.range >= win1 &
                           Time.range <= win2, select = Means)
@@ -89,14 +89,42 @@
           vector <- c(vector, grand.avg[i, 3])
         }
     }
-      if (is.null(vector)) {
-        peaks.ga <- values[which.max(abs(values))]
-      } else {
-        vector <- unlist(vector)
-        peaks.ga <- vector[which.max(abs(vector))]
-      }
+
+      # depricated code that does not allow choosing polarity
+      #if (is.null(vector)) {
+      #  peaks.ga <- values[which.max(abs(values))]
+      #} else {
+      #  vector <- unlist(vector)
+      #  peaks.ga <- vector[which.max(abs(vector))]
+      #}
+
+  # when no peak values are identified (vector is NULL)
+  # selects either most positive, negative or abs()
+  # of identified peaks (above) for use
+  if (is.null(vector) & pol == "pos") {
+    peaks <- values[which.max(values)]
+  } else if (is.null(vector) & pol == "neg") {
+    peaks <- values[which.min(values)]
+  } else if (is.null(vector) & pol == "abs") {
+    peaks <- values[which.max(abs(values))]
   }
-  )
+
+  # when peak values are identified (and stored in vector)
+  # selects either most positive, negative or abs()
+  # of identified peaks (above) for use
+  if (!is.null(vector) & pol == "pos") {
+    peaks <- vector[which.max(vector)]
+  } else if (!is.null(vector) & pol == "neg") {
+    peaks <- vector[which.min(vector)]
+  } else if (!is.null(vector) & pol == "abs") {
+    peaks <- vector[which.max(abs(vector))]
+  } # close if !is.null
+
+  peaks <- peaks # this line is essential or the code breaks!!
+                 # no idea why this is needed!!
+
+  } # close with() function
+  ) # close with()
 } # close main function
 
 # function that gets the condition associated with each grand average peak measure
@@ -110,10 +138,13 @@
 }
 
 # function that gets peak amplitudes for each subject, for each condition
-.get.peak.amps = function(x, y, avgsub, Stimulus, Time.range, win1, win2, num.pts) {
+.get.peak.amps = function(x, y, avgsub, Stimulus, Time.range, win1, win2, num.pts, pol) {
   with(avgsub, { # see .get.ga.mamps comment
     values = subset(avgsub, Subject == x & Stimulus == y & Time.range >= win1 &
-                         Time.range <= win2, select=Means)
+                         Time.range <= win2, select=Means) # gets individual averaged amplitudes
+                                                           # between specified time windows
+
+    # translates user-defined time window to actual time window
     all.values <- subset(avgsub, Subject == x & Stimulus == y)
     rownames(all.values) <- NULL # this resets the row indexes each time the program loops, else
       # the which command refers to unexpected rows
@@ -121,8 +152,10 @@
     times = subset(all.values, Stimulus == y, select = Time)
     rowinfo1 <- max(which(abs(times-win1) == min(abs(times-win1))))
     rowinfo2 <- max(which(abs(times-win2) == min(abs(times-win2))))
-    winnew1 = rownames(times)[rowinfo1]
-    winnew2 = rownames(times)[rowinfo2]
+    winnew1 = rownames(times)[rowinfo1] # translates user-defined time window to actual time window
+    winnew2 = rownames(times)[rowinfo2] # translates user-defined time window to actual time window
+
+    # looks for peaks using sliding window
     vector = NULL
     for (i in winnew1:winnew2) {
       start <- i - num.pts
@@ -137,14 +170,43 @@
         vector <- c(vector, all.values[i, 4])
       }
     }
-    if (is.null(vector)) {
+
+    # original peak amplitude code found abs only
+    # selects amplitude to report
+    #if (is.null(vector)) {
+    #  peaks <- values[which.max(abs(values))]
+    #} else {
+    #  vector <- unlist(vector)
+    #  peaks <- vector[which.max(abs(vector))]
+    #}
+
+    # when no peak values are identified (vector is NULL)
+    # selects either most positive, negative or abs()
+    # of identified peaks (above) for use
+    if (is.null(vector) & pol == "pos") {
+      peaks <- values[which.max(values)]
+    } else if (is.null(vector) & pol == "neg") {
+      peaks <- values[which.min(values)]
+    } else if (is.null(vector) & pol == "abs") {
       peaks <- values[which.max(abs(values))]
-    } else {
-      vector <- unlist(vector)
-      peaks <- vector[which.max(abs(vector))]
     }
-  }
-  )
+
+    # when peak values are identified (and stored in vector)
+    # selects either most positive, negative or abs()
+    # of identified peaks (above) for use
+    if (!is.null(vector) & pol == "pos") {
+      peaks <- vector[which.max(vector)]
+    } else if (!is.null(vector) & pol == "neg") {
+      peaks <- vector[which.min(vector)]
+    } else if (!is.null(vector) & pol == "abs") {
+      peaks <- vector[which.max(abs(vector))]
+    } # close if !is.null
+
+    peaks <- peaks # this line is essential or the code breaks!!!
+                   # no idea why!!
+
+  } # close with() function
+  ) # close with()
 } # close main function
 
 # function that gets subject IDs for peak measures

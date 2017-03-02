@@ -2,7 +2,8 @@
 #'
 #' \code{grandaverage} plots the grand average waveform for each condition present in the
 #'   data frame you provide.  A color-coded and labeled legend is generated with the plot
-#'   for ease of identification of each condition.
+#'   for ease of identification of each condition.  The legend can be suppressed if it
+#'   interferes with the data presentation (i.e., hides part of the waveform).
 #'
 #' @param data A data frame in the format returned from \code{\link{load.data}}
 #' @param electrodes A single value or concatenation of several values (to be averaged)
@@ -15,6 +16,8 @@
 #'   \code{\link{load.data}} (you only need to define the epoch once upon importing the data).
 #'   The purpose of the \code{window} argument in this function is merely to highlight a
 #'   window of interest; its default value is NULL.
+#' @param lgnd Whether or not a legend should appear on the plot. By default a legend
+#'   will appear, but can be suppressed by setting \code{lgnd} equal to "n".
 #'
 #' @details \code{grandaverage} will return a plot of the grand average waveform for each
 #'   condition present in the data frame you provide.  For ease of use, colors are
@@ -26,7 +29,8 @@
 #'   averaged together as a single electrode.
 #'
 #' @return A single plot of grand average waveforms for each condition. Includes a
-#'   color-coded and labeled legend.
+#'   color-coded and labeled legend (that can be suppressed if specified). Also
+#'   returns the raw waveform data for each condition.
 #'
 #' @examples
 #' # Create a plot of the grand average waveforms for each imported condition
@@ -35,7 +39,7 @@
 #' @author Travis Moore
 
   # plots the grand average of all loaded conditions
-grandaverage <- function(data, electrodes, window = NULL) {
+grandaverage <- function(data, electrodes, window = NULL, lgnd = NULL) {
   data.fun <- data
   num.subs <- length(levels(data$Subject))
   sub.IDs <- levels(data$Subject)
@@ -59,48 +63,53 @@ grandaverage <- function(data, electrodes, window = NULL) {
     # extracts grand mean data
   means.cond.sub <- .ind.by.cond(data, electrodes, window, Time.range,
                             avgsub, trial.types, Stimulus, num.subs, num.conditions)
-    # does the actual plotting
+
+  # does the actual plotting
+  # plots first subject/condition only to establish plotting space
+  # subsequent subjects and conditions are plotted below
   lower <- min(rowMeans(plyr::ldply(means.cond.sub)))
   upper <- max(rowMeans(plyr::ldply(means.cond.sub)))
   plot(rowMeans(as.data.frame(means.cond.sub[1])) ~ Time.range, typ = "l", lwd = 3,
        main = "Grand Average", xlab = "Time in milliseconds", ylab = "Amplitude in microvolts",
        col = 2, ylim = c(lower, upper))
+  mtext(paste("Electrodes: ", toString(electrodes), sep=""), side=1, line=4, adj=0)
 
-
-
+  # adds rectangular window, if specified
   if (!is.null(window)) {
     rect(win1, lower, win2, upper, lwd = 2, col=rgb(0.8, 0.8, 0.8, 0.3))
-
-    #legend("topright", inset = 0.05, title = "Trial Types", lwd = 3, trial.types,
-    #      col = 2, bg = "white")
-
   } else {
     # nothing
   }
 
-
-
-
+  # creates legend, unless lgnd=="n"
+  if (is.null(lgnd)) {
   legend("topright", inset = 0.05, title = "Trial Types", lwd = 3, trial.types,
          col = 2, bg = "white")
+  } else if (lgnd == "n") {
+    # no legend
+  } # close legend if
 
+    # plots subsequent subjects and conditions
     if (num.conditions >= 2) {
       counter <- 3 # counter that increments the color of the lines()
       for (k in 2:num.conditions) {
         counter <- counter + 1
         lines(rowMeans(as.data.frame(means.cond.sub[k])) ~ Time.range, typ = "l",
               lwd = 3, col = counter)
-
+        # creates legend, unless lgnd=="n"
+        if (is.null(lgnd)) {
         try(legend("topright", inset = 0.05, title = "Trial Types", lwd = 3, trial.types,
                    col = c(2, 4, seq(5, num.conditions+3, 1)), bg = "white")
             , silent = TRUE)  # suppresses a known error when there is only 1 condition
-      }
+        } else if (lgnd == "n") {
+          # no legend
+          } # close legend if
+      } # close for loop
     } else {
       # nothing
     }
 
-  # activate this line to return a data frame of the raw amplitudes of the grand average
-  return(rowMeans(as.data.frame(means.cond.sub)))
-
+  # return a data frame of the raw amplitudes of the grand average
+  return(lapply(means.cond.sub, rowMeans))
 
 }  # CLOSE MAIN FUNCTION

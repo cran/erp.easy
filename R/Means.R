@@ -27,6 +27,8 @@
 #'     \item Mean Amplitude
 #' }
 #'
+#' A plot indicating the specified time window
+#'
 #' @examples
 #' # Calculate mean amplitude and standard deviation
 #' m.measures(ERPdata, electrodes = "V78", window = c(1000, 1500))
@@ -34,6 +36,7 @@
 #' @author Travis Moore
 
 m.measures <- function(data, electrodes, window) {
+  pol="abs"
   data.fun <- data
   num.subs <- length(levels(data$Subject))
   sub.IDs <- levels(data$Subject)
@@ -77,7 +80,7 @@ for (t in 1:num.conditions) {
 peaks.ga <- vector("list", num.conditions)
 for (t in 1:num.conditions) {
   peaks.ga[[t]] = lapply(trial.types[t], grand.avg, Stimulus, Time.range,
-                         win1, win2, num.pts = 10, FUN = .get.ga.pamps)
+                         win1, win2, num.pts = 10, pol="abs", FUN = .get.ga.pamps)
 }
 unpacked.means.ga <- unlist(means.ga)
 unpacked.sd.ga <- unlist(sd.ga)
@@ -105,7 +108,7 @@ for (t in 1:num.conditions) {
 peaks = vector("list", num.conditions)	# begin individual measures
 for (i in 1:num.conditions) {
   peaks[[i]] = lapply(sub.IDs, trial.types[i], avgsub, Stimulus.ind, Time.range,
-                      win1, win2, num.pts = 10, FUN = .get.peak.amps)
+                      win1, win2, num.pts = 10, pol="abs", FUN = .get.peak.amps)
 }
 unpacked.peak.amp <- unlist(peaks)
 unpacked.mean.amp <- unlist(means.ind)

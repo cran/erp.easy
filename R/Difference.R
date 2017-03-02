@@ -1,4 +1,4 @@
-#' Calculate a difference waveform from two data frames
+#' Calculate a difference waveform from two data sets
 #'
 #' \code{dif.wave} calculates a difference waveform from two data frames in the format
 #'   returned from \code{load.data}
@@ -46,6 +46,7 @@ dif.wave <- function(x, z, name = NULL, keep = NULL) {
   fcolsz <- z[ , 1:3]
   xcols <- x[ , 4:ncol(x)]
   zcols <- z[ , 4:ncol(z)]
+
   diff.cols <- xcols - zcols
   final <- cbind.data.frame(fcolsz, diff.cols)
 

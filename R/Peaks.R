@@ -1,10 +1,9 @@
 #' Calculate grand average and individual peak amplitude and latency
 #'
-#' \code{p.measures} calculates simple peak amplitude and latency for each condition
+#' \code{p.measures} calculates local or simple peak amplitude and latency for each condition
 #'   in the data frame. Values are calculated for grand average waveforms, as well as
 #'   for each individual subject. Values are based on the electrode, or electrode cluster for
-#'   dense arrays, provided in \code{electrodes}. This function will identify the largest
-#'   deviation from 0, whether positive or negative.
+#'   dense arrays, provided in \code{electrodes}.
 #'
 #' @param data A data frame in the format returned from \code{\link{load.data}}
 #' @param electrodes A single value or concatenation of several values (to be averaged)
@@ -18,9 +17,12 @@
 #' @param num.pts The number of bins to check for local peak measures. If no local peaks are
 #'   found, the simple peak will be returned. To force the simple peak, set \code{num.pts}
 #'   to 0.
-#'
-#' @details At this time there is no way to specify a negative or positive peak.
-#'   \code{p.measures} simply returns the largest absolute value deviation from zero.
+#' @param pol The polarity of peaks to favor when multiple peaks are present. Entering
+#'   "pos" will locate the most positive peak. Entering "neg" will locate the most
+#'   negative peak. Entering "abs" will find the greatest deviation from 0, regardless
+#'   of the polarity (i.e., the absolute value). If a single peak is located, it will
+#'   be selected regardless of polarity specified. To avoid this, set \code{num.pts}
+#'   to 0 (for simple peak measures).
 #'
 #' @return A data frame with columns labeled:
 #' \itemize{
@@ -30,24 +32,26 @@
 #'     \item Peak Amplitude
 #' }
 #'
+#' A plot indicating the time window and identified peak(s)
+#'
 #' @examples
 #' # Calculate peak latency and amplitude
-#' p.measures(ERPdata, electrodes = "V78", window = c(1000, 1500))
+#' p.measures(ERPdata, electrodes = "V78", window = c(1000, 1500), num.pts=10, pol="abs")
 #'
 #' @author Travis Moore
 
 
-p.measures <- function(data, electrodes, window, num.pts = 10) {
+p.measures <- function(data, electrodes, window, num.pts = 10, pol="abs") {
   data.fun <- data
   num.subs <- length(levels(data$Subject))
   sub.IDs <- levels(data$Subject)
   num.conditions <- length(levels(data$Stimulus))
   trial.types <- levels(data$Stimulus)
   time.points <- (length(data$Time)/num.subs)/num.conditions  # an integer
-  # of the number of time points for one stimulus type for one subject
+     # of the number of time points for one stimulus type for one subject
   Time.range <- data$Time[1:time.points]
 
-# only use this for grand average measures - for alternating stimuli blocks (old way)
+# only use this for grand average measures - for alternating stimulus blocks (old way)
   stim.list <- vector("list")
   for (i in 1:length(levels(data$Stimulus))) {
     stim.list[[i]] <- c(rep(levels(data$Stimulus)[i], time.points))
@@ -74,8 +78,8 @@ p.measures <- function(data, electrodes, window, num.pts = 10) {
     # but it was easier to program each piece of info for the data frame
     for (t in 1:num.conditions) {
       peaks.ga[[t]] = lapply(trial.types[t], grand.avg, Stimulus, Time.range,
-                             win1, win2, num.pts, FUN = .get.ga.pamps)
-    }
+                             win1, win2, num.pts, pol, FUN = .get.ga.pamps)
+    } # close for loop
   unpacked.peaks.ga <- unlist(peaks.ga)
   peak.ga.lat = vector("list", length(unpacked.peaks.ga))
   peak.ga.cond = vector("list", length(unpacked.peaks.ga))
@@ -91,15 +95,11 @@ p.measures <- function(data, electrodes, window, num.pts = 10) {
 
 # ------------- begin individual measures
 
-  # this is likely the culprit.  Make sure the lapply function is actually cycling through every subject
+  # make sure the lapply function is actually cycling through every subject
     peaks = vector("list",num.conditions)	# begin individual measures
   for (i in 1:num.conditions) {
     peaks[[i]] = lapply(sub.IDs, trial.types[i], avgsub, Stimulus.ind, Time.range,
-                        win1, win2, num.pts, FUN = .get.peak.amps)
-
-
-    #peaks[[i]] = lapply(sub.IDs, trial.types[i], avgsub, Stimulus.ind, Time.range,
-    #                    win1, win2, num.pts, FUN = .get.peak.amps)
+                        win1, win2, num.pts, pol, FUN = .get.peak.amps)
   } # close for loop
 
   unpacked.peak.amp <- unlist(peaks)
